@@ -1,0 +1,54 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id           Int           @id @default(autoincrement())
+  name         String
+  opensAt      String
+  closesAt     String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  tables       Table[]
+  reservations Reservation[]
+}
+
+model Table {
+  id           Int           @id @default(autoincrement())
+  restaurantId Int
+  tableNumber  Int
+  capacity     Int
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([restaurantId, tableNumber])
+  @@index([restaurantId])
+}
+
+model Reservation {
+  id              Int        @id @default(autoincrement())
+  restaurantId    Int
+  tableId         Int
+  customerName    String
+  phone           String
+  partySize       Int
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int
+  status          String     @default("confirmed")
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table           Table      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([restaurantId, startTime, endTime])
+  @@index([tableId, startTime, endTime])
+}
